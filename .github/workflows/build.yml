@@ -1,0 +1,44 @@
+name: Build MCM Tool
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest  # 使用 Windows 环境
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Build EXE with Nuitka
+      # 使用 cmd 运行 Nuitka 命令
+      run: |
+        python -m nuitka --standalone --onefile ^
+          --output-filename=MCM_VisTool.exe ^
+          --mingw64 ^
+          --plugin-enable=pyside6 ^
+          --include-package=pyvista ^
+          --include-package=vtkmodules ^
+          --include-package=pandas ^
+          --windows-console-mode=disable ^
+          --windows-icon-from-ico=resources/icon.ico ^
+          --include-data-dir=resources=resources ^
+          main.py
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MCM_VisTool_Windows_Build
+        path: MCM_VisTool.exe
